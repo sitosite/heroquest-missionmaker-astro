@@ -1,10 +1,9 @@
 ---
-import Board from "../components/Board.jsx";
-import ObjectItem from '../components/ObjectItem.jsx';
+import App from "../components/App.jsx";
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="ca">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,71 +13,9 @@ import ObjectItem from '../components/ObjectItem.jsx';
             href="https://fonts.googleapis.com/css2?family=Oxygen:wght@400;700&display=swap"
             rel="stylesheet"
         />
-        <title>HeroQuest Creador de misiones</title>
+        <title>HeroQuest Creador de Missions</title>
     </head>
-    <body class="font-sans">
-        <div class="container mx-auto my-4">
-            <Board client:only="react" />
-        </div>
-        <div class="container mx-auto my-4 border border-black p-4 mb-4">
-            <h2 class="text-2xl font-bold mb-2">Enemigos</h2>
-            <div class="grid grid-cols-4 gap-4">
-                <ObjectItem title="Orcos" type="orco" size="1x1" quantity={6} client:only="react" />
-                <ObjectItem
-                    title="Goblins"
-                    type="goblin"
-                    size="1x1"
-                    quantity={8}
-					client:only="react"
-                />
-                <ObjectItem
-                    title="Esqueletos"
-                    type="esqueleto"
-                    size="1x1"
-                    quantity={4}
-					client:only="react"
-                />
-                <ObjectItem
-                    title="Zombies"
-                    type="zombie"
-                    size="1x1"
-                    quantity={2}
-					client:only="react"
-                />
-                <ObjectItem
-                    title="Abominaciones"
-                    type="abominaciones"
-                    size="1x1"
-                    quantity={3}
-					client:only="react"
-                />
-                <ObjectItem
-                    title="Guerreros del terror"
-                    type="caos"
-                    size="1x1"
-                    quantity={3}
-					client:only="react"
-                />
-                <ObjectItem
-                    title="Gargola"
-                    type="gargola"
-                    size="1x1"
-                    quantity={1}
-					client:only="react"
-                />
-            </div>
-        </div>
-        <div class="container mx-auto my-4 border border-black p-4 mb-4sa">
-            <h2 class="text-2xl font-bold mb-2">Trampas / Obstáculos</h2>
-            <div class="grid grid-cols-4 gap-4">
-                <ObjectItem
-                    title="Casillas Dobles Bloqueadas"
-                    type="pared-doble"
-                    size="2x1"
-                    quantity={6}
-					client:only="react"
-                />
-            </div>
-        </div>
+    <body class="font-sans bg-gray-50">
+        <App client:only="react" />
     </body>
 </html>

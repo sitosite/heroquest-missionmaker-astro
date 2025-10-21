@@ -1,7 +1,10 @@
 import React from 'react';
+import { useMission } from '../context/MissionContext.jsx';
 
 function ObjectItem({ title, type, size, quantity = 1 }) {
-    // Función para calcular clases de tamaño
+    const { inventory } = useMission();
+
+    // Funció per calcular classes de mida
     function getSizeClasses(size) {
         const sizeMap = {
             "1x1": "w-8 h-8",
@@ -14,18 +17,36 @@ function ObjectItem({ title, type, size, quantity = 1 }) {
     }
 
     const sizeClasses = getSizeClasses(size);
+    const itemInventory = inventory[type] || { available: 0, total: quantity };
+    const available = itemInventory.available;
 
     return (
-        <div className="object-item">
-            <p className="text-sm font-bold uppercase mb-1">{title}:</p>
+        <div className="object-item p-2 border border-gray-300 rounded">
+            <p className="text-sm font-bold uppercase mb-1">
+                {title}
+                <span className={`ml-2 ${available === 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    ({available}/{itemInventory.total})
+                </span>
+            </p>
             <div className="flex flex-wrap gap-1">
-                {Array.from({ length: quantity }).map((_, i) => (
+                {Array.from({ length: available }).map((_, i) => (
                     <img
                         key={i}
                         src={`/items/${type}.svg`}
-                        className={sizeClasses}
+                        className={`${sizeClasses} cursor-grab active:cursor-grabbing`}
                         alt={`${title} ${i + 1}`}
                         draggable="true"
+                        data-type={type}
+                    />
+                ))}
+                {/* Mostrar peces utilitzades com a grises */}
+                {Array.from({ length: itemInventory.total - available }).map((_, i) => (
+                    <img
+                        key={`used-${i}`}
+                        src={`/items/${type}.svg`}
+                        className={`${sizeClasses} opacity-30 cursor-not-allowed`}
+                        alt={`${title} utilitzat ${i + 1}`}
+                        draggable="false"
                     />
                 ))}
             </div>
