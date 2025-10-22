@@ -37,7 +37,7 @@ const INITIAL_INVENTORY = {
 const MissionContext = createContext();
 
 export function MissionProvider({ children }) {
-    // Estat de les peces col·locades al tauler (amb rotació)
+    // Estat de les peces col·locades al tauler (amb rotació i mida)
     const [placedPieces, setPlacedPieces] = useState({});
 
     // Inventari de peces disponibles
@@ -58,6 +58,66 @@ export function MissionProvider({ children }) {
         createdAt: new Date().toISOString()
     });
 
+    // Funció per convertir mida "2x1" a {width: 2, height: 1}
+    const parseSizeString = (sizeStr) => {
+        const [width, height] = sizeStr.split('x').map(Number);
+        return { width, height };
+    };
+
+    // Funció per obtenir dimensions amb rotació aplicada
+    const getDimensionsWithRotation = (size, rotation) => {
+        const { width, height } = parseSizeString(size);
+        // Si rotació és 90 o 270 graus, intercanviem amplada i altura
+        if (rotation === 90 || rotation === 270) {
+            return { width: height, height: width };
+        }
+        return { width, height };
+    };
+
+    // Funció per convertir cellId "row-col" a {row, col}
+    const parseCellId = (cellId) => {
+        const [row, col] = cellId.split('-').map(Number);
+        return { row, col };
+    };
+
+    // Funció per obtenir totes les cel·les que ocupa una peça
+    const getOccupiedCells = (cellId, size, rotation) => {
+        const { row, col } = parseCellId(cellId);
+        const { width, height } = getDimensionsWithRotation(size, rotation);
+        const cells = [];
+
+        for (let r = row; r < row + height; r++) {
+            for (let c = col; c < col + width; c++) {
+                cells.push(`${r}-${c}`);
+            }
+        }
+
+        return cells;
+    };
+
+    // Funció per verificar si es pot col·locar una peça
+    const canPlacePiece = (cellId, size, rotation, excludePieceId = null) => {
+        const occupiedCells = getOccupiedCells(cellId, size, rotation);
+
+        // Verificar que totes les cel·les estiguin dins del tauler
+        for (const cell of occupiedCells) {
+            const { row, col } = parseCellId(cell);
+            if (row < 0 || row >= 26 || col < 0 || col >= 19) {
+                return false;
+            }
+        }
+
+        // Verificar que totes les cel·les estiguin lliures (o siguin del excludePieceId)
+        for (const cell of occupiedCells) {
+            const pieceAtCell = placedPieces[cell];
+            if (pieceAtCell && pieceAtCell !== excludePieceId) {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
     // Afegir una peça al tauler
     const addPieceToBoard = (cellId, pieceType) => {
         const piece = inventory[pieceType];
@@ -67,15 +127,42 @@ export function MissionProvider({ children }) {
             return false;
         }
 
-        // Actualitzar peces col·locades (amb rotació inicial de 0°)
-        setPlacedPieces(prev => ({
-            ...prev,
-            [cellId]: {
+        const pieceInfo = INITIAL_INVENTORY[pieceType];
+        const rotation = 0;
+
+        // Verificar que es pot col·locar
+        if (!canPlacePiece(cellId, pieceInfo.size, rotation)) {
+            console.warn(`No es pot col·locar la peça a aquesta posició`);
+            return false;
+        }
+
+        // Generar ID únic per la peça
+        const pieceId = `${pieceType}-${Date.now()}-${Math.random()}`;
+
+        // Obtenir totes les cel·les que ocuparà
+        const occupiedCells = getOccupiedCells(cellId, pieceInfo.size, rotation);
+
+        // Actualitzar peces col·locades
+        setPlacedPieces(prev => {
+            const newPieces = { ...prev };
+
+            // Guardar la referència del pieceId a totes les cel·les ocupades
+            occupiedCells.forEach(cell => {
+                newPieces[cell] = pieceId;
+            });
+
+            // Guardar la informació de la peça amb la cel·la d'origen
+            newPieces[pieceId] = {
+                id: pieceId,
                 type: pieceType,
-                rotation: 0,
-                ...INITIAL_INVENTORY[pieceType]
-            }
-        }));
+                cellId: cellId, // Cel·la d'origen (top-left)
+                rotation: rotation,
+                ...pieceInfo,
+                occupiedCells
+            };
+
+            return newPieces;
+        });
 
         // Reduir inventari
         setInventory(prev => ({
@@ -91,8 +178,10 @@ export function MissionProvider({ children }) {
 
     // Rotar una peça al tauler
     const rotatePiece = (cellId) => {
-        const piece = placedPieces[cellId];
+        const pieceId = placedPieces[cellId];
+        if (!pieceId || typeof pieceId !== 'string' || !pieceId.includes('-')) return false;
 
+        const piece = placedPieces[pieceId];
         if (!piece) return false;
 
         // Només rotar si la peça és rotable
@@ -102,29 +191,66 @@ export function MissionProvider({ children }) {
             return false;
         }
 
-        // Rotar 90 graus (0 -> 90 -> 180 -> 270 -> 0)
-        setPlacedPieces(prev => ({
-            ...prev,
-            [cellId]: {
-                ...prev[cellId],
-                rotation: (prev[cellId].rotation + 90) % 360
-            }
-        }));
+        // Calcular nova rotació
+        const newRotation = (piece.rotation + 90) % 360;
+
+        // Verificar que amb la nova rotació cap en l'espai
+        if (!canPlacePiece(piece.cellId, piece.size, newRotation, pieceId)) {
+            console.warn(`No hi ha espai per rotar la peça`);
+            return false;
+        }
+
+        // Actualitzar peces col·locades
+        setPlacedPieces(prev => {
+            const newPieces = { ...prev };
+
+            // Esborrar referències antigues
+            piece.occupiedCells.forEach(cell => {
+                delete newPieces[cell];
+            });
+
+            // Calcular noves cel·les ocupades
+            const newOccupiedCells = getOccupiedCells(piece.cellId, piece.size, newRotation);
+
+            // Afegir noves referències
+            newOccupiedCells.forEach(cell => {
+                newPieces[cell] = pieceId;
+            });
+
+            // Actualitzar informació de la peça
+            newPieces[pieceId] = {
+                ...piece,
+                rotation: newRotation,
+                occupiedCells: newOccupiedCells
+            };
+
+            return newPieces;
+        });
 
         return true;
     };
 
     // Eliminar una peça del tauler
     const removePieceFromBoard = (cellId) => {
-        const piece = placedPieces[cellId];
+        const pieceId = placedPieces[cellId];
+        if (!pieceId || typeof pieceId !== 'string' || !pieceId.includes('-')) return false;
 
+        const piece = placedPieces[pieceId];
         if (!piece) return false;
 
         // Eliminar del tauler
         setPlacedPieces(prev => {
-            const newState = { ...prev };
-            delete newState[cellId];
-            return newState;
+            const newPieces = { ...prev };
+
+            // Esborrar totes les referències
+            piece.occupiedCells.forEach(cell => {
+                delete newPieces[cell];
+            });
+
+            // Esborrar la informació de la peça
+            delete newPieces[pieceId];
+
+            return newPieces;
         });
 
         // Retornar a l'inventari
@@ -135,6 +261,50 @@ export function MissionProvider({ children }) {
                 available: prev[piece.type].available + 1
             }
         }));
+
+        return true;
+    };
+
+    // Moure una peça ja col·locada al tauler
+    const movePieceOnBoard = (oldCellId, newCellId) => {
+        const pieceId = placedPieces[oldCellId];
+        if (!pieceId || typeof pieceId !== 'string' || !pieceId.includes('-')) return false;
+
+        const piece = placedPieces[pieceId];
+        if (!piece) return false;
+
+        // Verificar que es pot moure a la nova posició
+        if (!canPlacePiece(newCellId, piece.size, piece.rotation, pieceId)) {
+            console.warn(`No es pot moure la peça a aquesta posició`);
+            return false;
+        }
+
+        // Actualitzar peces col·locades
+        setPlacedPieces(prev => {
+            const newPieces = { ...prev };
+
+            // Esborrar referències antigues
+            piece.occupiedCells.forEach(cell => {
+                delete newPieces[cell];
+            });
+
+            // Calcular noves cel·les ocupades
+            const newOccupiedCells = getOccupiedCells(newCellId, piece.size, piece.rotation);
+
+            // Afegir noves referències
+            newOccupiedCells.forEach(cell => {
+                newPieces[cell] = pieceId;
+            });
+
+            // Actualitzar informació de la peça
+            newPieces[pieceId] = {
+                ...piece,
+                cellId: newCellId,
+                occupiedCells: newOccupiedCells
+            };
+
+            return newPieces;
+        });
 
         return true;
     };
@@ -241,6 +411,7 @@ export function MissionProvider({ children }) {
         missionMetadata,
         addPieceToBoard,
         removePieceFromBoard,
+        movePieceOnBoard,
         rotatePiece,
         clearBoard,
         updateMissionMetadata,
@@ -249,7 +420,8 @@ export function MissionProvider({ children }) {
         getSavedMissions,
         exportMission,
         importMission,
-        INITIAL_INVENTORY
+        INITIAL_INVENTORY,
+        getDimensionsWithRotation
     };
 
     return (
