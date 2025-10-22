@@ -1,54 +1,107 @@
-# Astro Starter Kit: Basics
+# HeroQuest Mission Maker
 
-```sh
-npm create astro@latest -- --template basics
-```
+Una aplicació web per crear missions personalitzades del joc de taula HeroQuest. Construïda amb Astro, React, Tailwind CSS i Dragula.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
+![HeroQuest Mission Maker](https://img.shields.io/badge/HeroQuest-Mission%20Maker-blue)
+![Astro](https://img.shields.io/badge/Astro-3.5-orange)
+![React](https://img.shields.io/badge/React-18.2-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## ✨ Funcionalitats
 
-![just-the-basics](https://github.com/withastro/astro/assets/2244813/a0a5533c-a856-4198-8470-2d67b1d7c554)
+### Gestió de Missions
+- **Drag & Drop**: Arrossega peces des de l'inventari al tauler
+- **Rotació de peces**: Click dret per rotar portes, obstacles i escales
+- **Inventari intel·ligent**: Mostra peces disponibles/utilitzades en temps real
+- **Metadata de missions**: Afegeix nom, descripció, dificultat i autor
 
-## 🚀 Project Structure
+### Tipus de Peces Disponibles
+- **Enemics** (8 tipus): Orcos, Goblins, Esqueletos, Zombies, Abominacions, Guerrers del Terror, Gàrgola, Mòmia
+- **Portes** (8 unitats): Portes rotables
+- **Mobles** (6 tipus): Taules, Armaris, Llibreries, Llars de foc, Bancs, Altars
+- **Tresors**: Cofres (6 unitats)
+- **Trampes i Obstacles**: Parets dobles bloquejades, Fosses trampa
+- **Escales** (2 unitats, mida 2x2, rotables)
 
-Inside of your Astro project, you'll see the following folders and files:
+### Persistència i Compartició
+- **Guardar/Carregar**: Desa missions a localStorage
+- **Exportar JSON**: Descarrega missions com a fitxer JSON
+- **Importar JSON**: Carrega missions d'altres usuaris
+- **Esborrar tot**: Reinicia el tauler (amb confirmació)
+
+### Interfície
+- Indicadors visuals d'inventari (verd/vermell)
+- Peces utilitzades es mostren en gris
+- Instruccions integrades
+- Organització per categories
+
+## 🚀 Estructura del Projecte
 
 ```text
 /
 ├── public/
-│   └── favicon.svg
+│   ├── items/          # Imatges SVG de les peces
+│   └── tablero.jpg     # Imatge de fons del tauler
 ├── src/
 │   ├── components/
-│   │   └── Card.astro
-│   ├── layouts/
-│   │   └── Layout.astro
+│   │   ├── App.jsx                    # Component principal
+│   │   ├── Board.jsx                  # Tauler amb drag & drop
+│   │   ├── ObjectItem.jsx             # Peça d'inventari
+│   │   ├── MissionControls.jsx        # Controls de missió
+│   │   └── MissionMetadataEditor.jsx  # Editor de metadata
+│   ├── context/
+│   │   └── MissionContext.jsx         # Gestió d'estat global
 │   └── pages/
-│       └── index.astro
+│       └── index.astro                # Pàgina principal
 └── package.json
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## 🧞 Comandaments
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Tots els comandaments s'executen des de l'arrel del projecte, des d'un terminal:
 
-Any static assets, like images, can be placed in the `public/` directory.
+| Comandament               | Acció                                                |
+| :------------------------ | :--------------------------------------------------- |
+| `npm install`             | Instal·la les dependències                           |
+| `npm run dev`             | Inicia el servidor de desenvolupament a `localhost:4321` |
+| `npm run build`           | Compila el lloc per producció a `./dist/`            |
+| `npm run preview`         | Previsualitza la compilació localment                |
 
-## 🧞 Commands
+## 🎮 Com Utilitzar l'Aplicació
 
-All commands are run from the root of the project, from a terminal:
+1. **Iniciar el servidor**
+   ```bash
+   npm install
+   npm run dev
+   ```
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+2. **Crear una missió**
+   - Omple la metadata de la missió (nom, autor, dificultat, descripció)
+   - Arrossega peces des de l'inventari al tauler
+   - Fes clic dret sobre peces rotables per rotar-les
+   - Fes clic esquerre per eliminar peces del tauler
 
-## 👀 Want to learn more?
+3. **Guardar la missió**
+   - Click a "Guardar Missió"
+   - Introdueix un nom per la missió
+   - La missió es desa a localStorage
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+4. **Compartir la missió**
+   - Click a "Exportar JSON"
+   - Comparteix el fitxer JSON amb altres usuaris
+   - Altres usuaris poden usar "Importar JSON" per carregar-la
+
+## 🛠️ Tecnologies
+
+- **Astro 3.5** - Framework web modern
+- **React 18.2** - Components interactius
+- **Tailwind CSS 3.3** - Estils
+- **Dragula 3.7** - Funcionalitat drag & drop
+
+## 📝 Llicència
+
+Aquest projecte està sota llicència MIT.
+
+## 🙏 Crèdits
+
+Basat en el joc de taula HeroQuest de Hasbro/Avalon Hill.

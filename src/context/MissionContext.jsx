@@ -2,20 +2,42 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Definició de l'inventari inicial de peces
 const INITIAL_INVENTORY = {
-    orco: { title: "Orcos", type: "orco", size: "1x1", total: 6 },
-    goblin: { title: "Goblins", type: "goblin", size: "1x1", total: 8 },
-    esqueleto: { title: "Esqueletos", type: "esqueleto", size: "1x1", total: 4 },
-    zombie: { title: "Zombies", type: "zombie", size: "1x1", total: 2 },
-    abominaciones: { title: "Abominaciones", type: "abominaciones", size: "1x1", total: 3 },
-    caos: { title: "Guerreros del terror", type: "caos", size: "1x1", total: 3 },
-    gargola: { title: "Gargola", type: "gargola", size: "1x1", total: 1 },
-    "pared-doble": { title: "Casillas Dobles Bloqueadas", type: "pared-doble", size: "2x1", total: 6 }
+    // Enemics
+    orco: { title: "Orcos", type: "orco", size: "1x1", total: 6, category: "enemies" },
+    goblin: { title: "Goblins", type: "goblin", size: "1x1", total: 8, category: "enemies" },
+    esqueleto: { title: "Esqueletos", type: "esqueleto", size: "1x1", total: 4, category: "enemies" },
+    zombie: { title: "Zombies", type: "zombie", size: "1x1", total: 2, category: "enemies" },
+    abominaciones: { title: "Abominaciones", type: "abominaciones", size: "1x1", total: 3, category: "enemies" },
+    caos: { title: "Guerreros del terror", type: "caos", size: "1x1", total: 3, category: "enemies" },
+    gargola: { title: "Gargola", type: "gargola", size: "1x1", total: 1, category: "enemies" },
+    momia: { title: "Mòmia", type: "momia", size: "1x1", total: 1, category: "enemies" },
+
+    // Portes
+    puerta: { title: "Porta", type: "puerta", size: "1x1", total: 8, category: "doors", rotatable: true },
+
+    // Mobles
+    mesa: { title: "Taula", type: "mesa", size: "1x1", total: 4, category: "furniture" },
+    armario: { title: "Armari", type: "armario", size: "1x1", total: 4, category: "furniture" },
+    estanteria: { title: "Llibreria", type: "estanteria", size: "1x1", total: 2, category: "furniture" },
+    chimenea: { title: "Llar de foc", type: "chimenea", size: "1x1", total: 2, category: "furniture" },
+    banco: { title: "Banc", type: "banco", size: "1x1", total: 4, category: "furniture" },
+    altar: { title: "Altar", type: "altar", size: "1x1", total: 2, category: "furniture" },
+
+    // Tresors
+    cofre: { title: "Cofre", type: "cofre", size: "1x1", total: 6, category: "treasure" },
+
+    // Trampes i obstacles
+    "pared-doble": { title: "Casillas Dobles Bloqueadas", type: "pared-doble", size: "2x1", total: 6, category: "traps", rotatable: true },
+    foso: { title: "Fossa trampa", type: "foso", size: "1x1", total: 4, category: "traps" },
+
+    // Escales
+    escaleras: { title: "Escales", type: "escaleras", size: "2x2", total: 2, category: "stairs", rotatable: true }
 };
 
 const MissionContext = createContext();
 
 export function MissionProvider({ children }) {
-    // Estat de les peces col·locades al tauler
+    // Estat de les peces col·locades al tauler (amb rotació)
     const [placedPieces, setPlacedPieces] = useState({});
 
     // Inventari de peces disponibles
@@ -27,6 +49,15 @@ export function MissionProvider({ children }) {
         return inv;
     });
 
+    // Metadata de la missió
+    const [missionMetadata, setMissionMetadata] = useState({
+        name: '',
+        description: '',
+        difficulty: 'medium',
+        author: '',
+        createdAt: new Date().toISOString()
+    });
+
     // Afegir una peça al tauler
     const addPieceToBoard = (cellId, pieceType) => {
         const piece = inventory[pieceType];
@@ -36,11 +67,12 @@ export function MissionProvider({ children }) {
             return false;
         }
 
-        // Actualitzar peces col·locades
+        // Actualitzar peces col·locades (amb rotació inicial de 0°)
         setPlacedPieces(prev => ({
             ...prev,
             [cellId]: {
                 type: pieceType,
+                rotation: 0,
                 ...INITIAL_INVENTORY[pieceType]
             }
         }));
@@ -51,6 +83,31 @@ export function MissionProvider({ children }) {
             [pieceType]: {
                 ...prev[pieceType],
                 available: prev[pieceType].available - 1
+            }
+        }));
+
+        return true;
+    };
+
+    // Rotar una peça al tauler
+    const rotatePiece = (cellId) => {
+        const piece = placedPieces[cellId];
+
+        if (!piece) return false;
+
+        // Només rotar si la peça és rotable
+        const pieceInfo = INITIAL_INVENTORY[piece.type];
+        if (!pieceInfo || !pieceInfo.rotatable) {
+            console.warn(`La peça ${piece.type} no es pot rotar`);
+            return false;
+        }
+
+        // Rotar 90 graus (0 -> 90 -> 180 -> 270 -> 0)
+        setPlacedPieces(prev => ({
+            ...prev,
+            [cellId]: {
+                ...prev[cellId],
+                rotation: (prev[cellId].rotation + 90) % 360
             }
         }));
 
@@ -94,12 +151,24 @@ export function MissionProvider({ children }) {
         setInventory(newInventory);
     };
 
+    // Actualitzar metadata de la missió
+    const updateMissionMetadata = (updates) => {
+        setMissionMetadata(prev => ({
+            ...prev,
+            ...updates
+        }));
+    };
+
     // Guardar missió a localStorage
     const saveMission = (missionName = 'mission') => {
         const mission = {
             name: missionName,
             placedPieces,
             inventory,
+            metadata: {
+                ...missionMetadata,
+                name: missionName
+            },
             savedAt: new Date().toISOString()
         };
 
@@ -127,6 +196,9 @@ export function MissionProvider({ children }) {
         const mission = JSON.parse(savedMission);
         setPlacedPieces(mission.placedPieces || {});
         setInventory(mission.inventory || {});
+        if (mission.metadata) {
+            setMissionMetadata(mission.metadata);
+        }
 
         return true;
     };
@@ -141,6 +213,7 @@ export function MissionProvider({ children }) {
         const mission = {
             placedPieces,
             inventory,
+            metadata: missionMetadata,
             exportedAt: new Date().toISOString()
         };
         return JSON.stringify(mission, null, 2);
@@ -152,6 +225,9 @@ export function MissionProvider({ children }) {
             const mission = JSON.parse(jsonString);
             setPlacedPieces(mission.placedPieces || {});
             setInventory(mission.inventory || {});
+            if (mission.metadata) {
+                setMissionMetadata(mission.metadata);
+            }
             return true;
         } catch (error) {
             console.error('Error important missió:', error);
@@ -162,14 +238,18 @@ export function MissionProvider({ children }) {
     const value = {
         placedPieces,
         inventory,
+        missionMetadata,
         addPieceToBoard,
         removePieceFromBoard,
+        rotatePiece,
         clearBoard,
+        updateMissionMetadata,
         saveMission,
         loadMission,
         getSavedMissions,
         exportMission,
-        importMission
+        importMission,
+        INITIAL_INVENTORY
     };
 
     return (

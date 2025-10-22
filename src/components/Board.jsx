@@ -4,7 +4,7 @@ import 'dragula/dist/dragula.min.css';
 import { useMission } from '../context/MissionContext.jsx';
 
 function Board() {
-    const { placedPieces, addPieceToBoard, removePieceFromBoard } = useMission();
+    const { placedPieces, addPieceToBoard, removePieceFromBoard, rotatePiece } = useMission();
     const boardRef = useRef(null);
     const dragulaRef = useRef(null);
 
@@ -72,8 +72,16 @@ function Board() {
     }, [placedPieces, addPieceToBoard]);
 
     // Funció per gestionar el clic en una peça col·locada (per eliminar-la)
-    const handlePieceClick = (cellId) => {
+    const handlePieceClick = (cellId, event) => {
+        event.stopPropagation();
         removePieceFromBoard(cellId);
+    };
+
+    // Funció per gestionar el clic dret (rotar peça)
+    const handlePieceRightClick = (cellId, event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        rotatePiece(cellId);
     };
 
     return (
@@ -94,10 +102,12 @@ function Board() {
                                     {piece && (
                                         <img
                                             src={`/items/${piece.type}.svg`}
-                                            className={`${getSizeClasses(piece.size)} absolute top-0 left-0 object-contain cursor-pointer hover:opacity-80`}
+                                            className={`${getSizeClasses(piece.size)} absolute top-0 left-0 object-contain cursor-pointer hover:opacity-80 transition-transform`}
+                                            style={{ transform: `rotate(${piece.rotation || 0}deg)` }}
                                             alt={piece.title}
-                                            onClick={() => handlePieceClick(cellId)}
-                                            title={`${piece.title} - Clic per eliminar`}
+                                            onClick={(e) => handlePieceClick(cellId, e)}
+                                            onContextMenu={(e) => handlePieceRightClick(cellId, e)}
+                                            title={`${piece.title} - Clic esquerre: eliminar | Clic dret: rotar`}
                                         />
                                     )}
                                 </div>
