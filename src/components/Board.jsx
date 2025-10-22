@@ -30,36 +30,55 @@ function Board() {
         const cells = Array.from(boardRef.current.querySelectorAll('.cell'));
         const objectContainers = Array.from(document.querySelectorAll('.object-item'));
 
-        // Inicialitzar Dragula
-        dragulaRef.current = dragula([...cells, ...objectContainers], {
+        // Combinar tots els contenidors
+        const allContainers = [...cells, ...objectContainers];
+
+        // Inicialitzar Dragula amb tots els contenidors
+        dragulaRef.current = dragula(allContainers, {
             copy: function (el, source) {
-                // Copiar només des dels contenidors d'objectes (no des del tauler)
-                return source.classList.contains('object-item');
+                // Copiar si l'element és una imatge amb data-type (des de l'inventari)
+                return el.tagName === 'IMG' && el.hasAttribute('data-type');
             },
-            accepts: function (el, target) {
-                // Només acceptar en cel·les del tauler i que estiguin buides
+            accepts: function (el, target, source, sibling) {
+                // Només acceptar en cel·les del tauler que estiguin buides
                 if (!target.classList.contains('cell')) return false;
 
                 // Verificar si la cel·la ja té una peça
                 const cellId = target.dataset.cellId;
                 return !placedPieces[cellId];
             },
-            removeOnSpill: false
+            moves: function (el, source, handle, sibling) {
+                // Només permetre arrossegar imatges que tinguin data-type
+                return el.tagName === 'IMG' && el.hasAttribute('data-type');
+            },
+            removeOnSpill: false,
+            revertOnSpill: true
         });
 
         // Event quan es deixa anar una peça
-        dragulaRef.current.on('drop', function (el, target, source) {
+        dragulaRef.current.on('drop', function (el, target, source, sibling) {
             if (target && target.classList.contains('cell')) {
                 const cellId = target.dataset.cellId;
-                const pieceType = el.dataset.type;
+                const pieceType = el.getAttribute('data-type');
+
+                if (!pieceType) {
+                    console.error('No s\'ha pogut determinar el tipus de peça');
+                    el.remove();
+                    return;
+                }
 
                 // Intentar afegir la peça al tauler
                 const success = addPieceToBoard(cellId, pieceType);
 
+                // Eliminar l'element que Dragula ha creat (gestionem el render nosaltres)
+                el.remove();
+
                 if (!success) {
-                    // Si no s'ha pogut afegir, eliminar l'element
-                    el.remove();
+                    console.warn(`No s'ha pogut col·locar la peça ${pieceType}`);
                 }
+            } else {
+                // Si no s'ha deixat anar en una cel·la vàlida, eliminar l'element
+                el.remove();
             }
         });
 

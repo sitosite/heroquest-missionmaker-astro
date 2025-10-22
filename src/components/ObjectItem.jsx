@@ -21,21 +21,20 @@ function ObjectItem({ title, type, size, quantity = 1 }) {
     const available = itemInventory.available;
 
     return (
-        <div className="object-item p-2 border border-gray-300 rounded">
+        <div className="p-2 border border-gray-300 rounded">
             <p className="text-sm font-bold uppercase mb-1">
                 {title}
                 <span className={`ml-2 ${available === 0 ? 'text-red-600' : 'text-green-600'}`}>
                     ({available}/{itemInventory.total})
                 </span>
             </p>
-            <div className="flex flex-wrap gap-1">
+            <div className="object-item flex flex-wrap gap-1">
                 {Array.from({ length: available }).map((_, i) => (
                     <img
                         key={i}
                         src={`/items/${type}.svg`}
                         className={`${sizeClasses} cursor-grab active:cursor-grabbing`}
                         alt={`${title} ${i + 1}`}
-                        draggable="true"
                         data-type={type}
                     />
                 ))}
@@ -44,9 +43,8 @@ function ObjectItem({ title, type, size, quantity = 1 }) {
                     <img
                         key={`used-${i}`}
                         src={`/items/${type}.svg`}
-                        className={`${sizeClasses} opacity-30 cursor-not-allowed`}
+                        className={`${sizeClasses} opacity-30 cursor-not-allowed pointer-events-none`}
                         alt={`${title} utilitzat ${i + 1}`}
-                        draggable="false"
                     />
                 ))}
             </div>
