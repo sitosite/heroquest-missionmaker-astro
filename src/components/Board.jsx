@@ -135,8 +135,22 @@ function Board() {
                             const cellId = `${rowIndex}-${columnIndex}`;
                             const cellData = placedPieces[cellId];
 
-                            // Només renderitzar la peça si aquesta cel·la és l'origen de la peça
-                            const piece = isPieceData(cellData) ? cellData : null;
+                            // Si cellData és un string, és una referència al pieceId
+                            // Si és un objecte, és la informació de la peça
+                            let piece = null;
+
+                            if (typeof cellData === 'string' && cellData.includes('-')) {
+                                // És un pieceId, buscar la informació de la peça
+                                const pieceData = placedPieces[cellData];
+                                // Només renderitzar si aquesta cel·la és l'origen de la peça
+                                if (pieceData && pieceData.cellId === cellId) {
+                                    piece = pieceData;
+                                }
+                            } else if (isPieceData(cellData)) {
+                                // És la informació completa de la peça
+                                piece = cellData;
+                            }
+
                             const sizeStyle = piece ? getSizeStyle(piece.size, piece.rotation || 0) : {};
 
                             return (
