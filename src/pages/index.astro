@@ -14,6 +14,10 @@ import App from "../components/App.jsx";
             rel="stylesheet"
         />
         <title>HeroQuest Creador de Missions</title>
+        <script is:inline>
+            // Polyfill per Dragula: defineix global com window
+            window.global = window;
+        </script>
     </head>
     <body class="font-sans bg-gray-50">
         <App client:only="react" />
